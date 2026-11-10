@@ -1,0 +1,1 @@
+import{p as e}from"./AuthenticatedLayout-Pz_GXEff.js";var t={name:`chevrons-up-down`,size:24,node:[[`path`,{d:`m7 15 5 5 5-5`,key:`1hf1tw`}],[`path`,{d:`m7 9 5-5 5 5`,key:`sgt6xg`}]]};t.node;var n=e(t);export{n as t};

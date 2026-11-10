@@ -15,6 +15,7 @@ import {
     ShieldCheck,
     UserCircle,
     UsersRound,
+    Wrench,
     X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -65,6 +66,7 @@ const adminNavigation = [
 const platformNavigation = [
     { label: 'Schools', href: 'platform.schools.index', icon: School },
     { label: 'Report templates', href: 'platform.report-card-templates.index', icon: ClipboardList },
+    { label: 'Maintenance', href: 'platform.maintenance.index', icon: Wrench },
 ];
 
 function Toast({ message, type, onClose }) {

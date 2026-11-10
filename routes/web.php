@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Platform\MaintenanceController;
 use App\Http\Controllers\Platform\ReportCardTemplateAccessController;
 use App\Http\Controllers\Platform\ReportCardTemplateController as PlatformReportCardTemplateController;
 use App\Http\Controllers\Platform\SchoolApprovalController;
@@ -136,6 +137,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/platform/report-card-templates/{platformReportCardTemplate}', [PlatformReportCardTemplateController::class, 'destroy'])->name('platform.report-card-templates.destroy');
         Route::post('/platform/report-card-templates/{platformReportCardTemplate}/accesses', [ReportCardTemplateAccessController::class, 'store'])->name('platform.report-card-templates.accesses.store');
         Route::delete('/platform/report-card-template-accesses/{platformReportCardTemplateAccess}', [ReportCardTemplateAccessController::class, 'destroy'])->name('platform.report-card-template-accesses.destroy');
+        Route::get('/platform/maintenance', [MaintenanceController::class, 'index'])->name('platform.maintenance.index');
+        Route::post('/platform/maintenance', [MaintenanceController::class, 'store'])
+            ->middleware(['password.confirm', 'throttle:6,1'])
+            ->name('platform.maintenance.store');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
