@@ -41,8 +41,8 @@ class StaffPortalInvite extends Notification implements ShouldQueue
         ]);
 
         return (new MailMessage)
-            ->subject("You're invited to {$this->school->name} on SchoolOS")
-            ->greeting('Welcome to SchoolOS')
+            ->subject("You're invited to {$this->school->name} on NexaEdu")
+            ->greeting('Welcome to NexaEdu')
             ->line("You have been invited to access {$this->school->name}'s school portal.")
             ->action('Accept invitation', $url)
             ->line('Use this invitation to complete your access setup.');

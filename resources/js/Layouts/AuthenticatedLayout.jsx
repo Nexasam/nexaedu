@@ -109,7 +109,7 @@ export default function AuthenticatedLayout({ title, subtitle, actions, children
     const isPlatformAdmin = user?.global_role === 'platform_admin';
     const permissions = auth.permissions ?? {};
     const brandedSchool = currentSchool ?? school;
-    const brandName = brandedSchool?.name ?? (isPlatformAdmin ? 'SchoolOS Platform' : 'School Portal');
+    const brandName = brandedSchool?.name ?? (isPlatformAdmin ? 'NexaEdu Platform' : 'School Portal');
     const primaryColor = brandedSchool?.primary_color || '#059669';
     const secondaryColor = brandedSchool?.secondary_color || '#0f172a';
     const brandFont = brandedSchool?.brand_font || 'Inter';
@@ -314,7 +314,7 @@ export default function AuthenticatedLayout({ title, subtitle, actions, children
                                 <Menu className="h-5 w-5" aria-hidden="true" strokeWidth={2} />
                             </button>
                             <div className="hidden min-w-0 sm:block">
-                                <div className="truncate text-sm font-bold text-slate-950">SchoolOS</div>
+                                <div className="truncate text-sm font-bold text-slate-950">NexaEdu</div>
                             </div>
                         </div>
 

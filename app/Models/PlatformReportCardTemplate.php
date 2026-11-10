@@ -12,12 +12,13 @@ class PlatformReportCardTemplate extends Model
     /** @use HasFactory<PlatformReportCardTemplateFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'education_level', 'term_result_mode', 'layout', 'grading_bands', 'traits', 'is_active'];
+    protected $fillable = ['name', 'education_level', 'education_levels', 'term_result_mode', 'layout', 'grading_bands', 'traits', 'is_active'];
 
     protected function casts(): array
     {
         return [
             'layout' => 'array',
+            'education_levels' => 'array',
             'grading_bands' => 'array',
             'traits' => 'array',
             'is_active' => 'boolean',

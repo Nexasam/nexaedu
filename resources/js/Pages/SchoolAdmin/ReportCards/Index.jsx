@@ -24,7 +24,7 @@ export default function Index({ templates, platformTemplates, templateSelections
     const policyForm = useForm({ term_result_mode: 'independent', term_weights: [1, 1, 1] });
     const sessionTerms = useMemo(() => terms.filter((term) => Number(term.academic_session_id) === Number(form.data.academic_session_id)), [form.data.academic_session_id, terms]);
     const selectedGroup = classGroups.find((group) => Number(group.id) === Number(selectionForm.data.class_group_id));
-    const compatibleTemplates = platformTemplates.filter((template) => template.education_level === selectedGroup?.education_level);
+    const compatibleTemplates = platformTemplates.filter((template) => (template.education_levels ?? [template.education_level]).includes(selectedGroup?.education_level));
     const selectedPlatformTemplate = platformTemplates.find((template) => Number(template.id) === Number(selectionForm.data.platform_report_card_template_id));
     const selectedSelection = templateSelections.find((selection) => Number(selection.class_group_id) === Number(selectionForm.data.class_group_id));
     const selectedSchoolTemplate = templates.find((template) => Number(template.id) === Number(selectedSelection?.report_card_template_id));

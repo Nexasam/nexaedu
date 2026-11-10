@@ -3,6 +3,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SearchableMultiSelect from '@/Components/SearchableMultiSelect';
 import SearchableSelect from '@/Components/SearchableSelect';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
@@ -32,7 +33,7 @@ export default function Index({ templates, educationLevels, schools, accesses })
     const [editingId, setEditingId] = useState(null);
     const [grantTemplate, setGrantTemplate] = useState(null);
     const form = useForm({
-        name: '', education_level: '', term_result_mode: 'independent', is_active: true,
+        name: '', education_levels: [], term_result_mode: 'independent', is_active: true,
         layout: { show_position: true, show_class_statistics: true, show_attendance: true, show_promotion_decision: true },
         grading_bands: defaultBands,
         traits: defaultTraits,
@@ -41,13 +42,13 @@ export default function Index({ templates, educationLevels, schools, accesses })
 
     const openCreate = () => {
         setEditingId(null);
-        form.setData({ name: '', education_level: '', term_result_mode: 'independent', is_active: true, layout: { show_position: true, show_class_statistics: true, show_attendance: true, show_promotion_decision: true }, grading_bands: defaultBands, traits: defaultTraits });
+        form.setData({ name: '', education_levels: [], term_result_mode: 'independent', is_active: true, layout: { show_position: true, show_class_statistics: true, show_attendance: true, show_promotion_decision: true }, grading_bands: defaultBands, traits: defaultTraits });
         form.clearErrors();
         setShowEditor(true);
     };
     const openEdit = (template) => {
         setEditingId(template.id);
-        form.setData({ name: template.name, education_level: template.education_level, term_result_mode: template.term_result_mode, is_active: template.is_active, layout: { show_position: true, show_class_statistics: true, show_attendance: true, show_promotion_decision: true, ...(template.layout ?? {}) }, grading_bands: template.grading_bands, traits: template.traits });
+        form.setData({ name: template.name, education_levels: template.education_levels ?? [template.education_level], term_result_mode: template.term_result_mode, is_active: template.is_active, layout: { show_position: true, show_class_statistics: true, show_attendance: true, show_promotion_decision: true, ...(template.layout ?? {}) }, grading_bands: template.grading_bands, traits: template.traits });
         form.clearErrors();
         setShowEditor(true);
     };
@@ -74,7 +75,7 @@ export default function Index({ templates, educationLevels, schools, accesses })
             <Head title="Platform report-card templates" />
             <DataTable columns={[
                 { key: 'name', label: 'Template', className: 'font-bold text-slate-950' },
-                { key: 'education_level', label: 'Education level', className: 'capitalize' },
+                { key: 'education_levels', label: 'Education levels', render: (template) => (template.education_levels ?? [template.education_level]).map((level) => level.charAt(0).toUpperCase() + level.slice(1)).join(', ') },
                 { key: 'term_result_mode', label: 'Term mode', className: 'capitalize' },
                 { key: 'traits', label: 'Traits', render: (template) => template.traits.length },
                 { key: 'grading_bands', label: 'Grades', render: (template) => template.grading_bands.length },
@@ -89,7 +90,7 @@ export default function Index({ templates, educationLevels, schools, accesses })
                 <form onSubmit={submit} className="max-h-[92vh] overflow-y-auto">
                     <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4"><div><h2 className="text-base font-bold text-slate-950">{editingId ? 'Edit report-card template' : 'New report-card template'}</h2><p className="mt-1 text-sm text-slate-500">This configuration controls what schools can select and what appears during report preparation.</p></div><button type="button" onClick={() => setShowEditor(false)} className="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100" aria-label="Close"><X className="h-4 w-4" /></button></div>
                     <div className="grid gap-6 p-5">
-                        <section className="grid gap-4 sm:grid-cols-2"><div><InputLabel value="Template name" /><input value={form.data.name} onChange={(event) => form.setData('name', event.target.value)} className="mt-1 block w-full rounded-md border-slate-300 text-sm" /><InputError message={form.errors.name} className="mt-1" /></div><div><InputLabel value="Education level" /><SearchableSelect value={form.data.education_level} options={educationLevels} searchPlaceholder="Search levels" placeholder="Select level" onChange={(id) => form.setData('education_level', id)} /><InputError message={form.errors.education_level} className="mt-1" /></div><div><InputLabel value="Term result mode" /><SearchableSelect value={form.data.term_result_mode} options={[{ id: 'independent', name: 'Independent terms' }, { id: 'cumulative', name: 'Cumulative session' }]} searchPlaceholder="Search modes" placeholder="Select mode" onChange={(id) => form.setData('term_result_mode', id)} /></div><Toggle checked={form.data.is_active} label="Available to schools" onChange={(value) => form.setData('is_active', value)} /></section>
+                        <section className="grid gap-4 sm:grid-cols-2"><div><InputLabel value="Template name" /><input value={form.data.name} onChange={(event) => form.setData('name', event.target.value)} className="mt-1 block w-full rounded-md border-slate-300 text-sm" /><InputError message={form.errors.name} className="mt-1" /></div><div><InputLabel value="Education levels" /><SearchableMultiSelect id="education-levels" selectedIds={form.data.education_levels} options={educationLevels} searchPlaceholder="Search and select levels" onChange={(ids) => form.setData('education_levels', ids)} /><InputError message={form.errors.education_levels} className="mt-1" /></div><div><InputLabel value="Term result mode" /><SearchableSelect value={form.data.term_result_mode} options={[{ id: 'independent', name: 'Independent terms' }, { id: 'cumulative', name: 'Cumulative session' }]} searchPlaceholder="Search modes" placeholder="Select mode" onChange={(id) => form.setData('term_result_mode', id)} /></div><Toggle checked={form.data.is_active} label="Available to schools" onChange={(value) => form.setData('is_active', value)} /></section>
 
                         <section><h3 className="text-sm font-bold text-slate-950">Visible report sections</h3><div className="mt-3 grid gap-2 sm:grid-cols-2">{Object.entries({ show_position: 'Student position', show_class_statistics: 'Class average, highest and lowest', show_attendance: 'Attendance summary', show_promotion_decision: 'Promotion decision' }).map(([key, label]) => <Toggle key={key} checked={form.data.layout[key]} label={label} onChange={(value) => form.setData('layout', { ...form.data.layout, [key]: value })} />)}</div></section>
 

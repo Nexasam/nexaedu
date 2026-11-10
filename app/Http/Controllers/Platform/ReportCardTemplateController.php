@@ -19,7 +19,6 @@ class ReportCardTemplateController extends Controller
         return Inertia::render('Platform/ReportCardTemplates/Index', [
             'templates' => PlatformReportCardTemplate::query()
                 ->withCount(['accesses' => fn ($query) => $query->where('status', 'granted')->whereNull('revoked_at')])
-                ->orderBy('education_level')
                 ->orderBy('name')
                 ->get(),
             'schools' => School::query()->where('status', 'approved')->orderBy('name')->get(['id', 'name', 'code']),
@@ -40,14 +39,14 @@ class ReportCardTemplateController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $template = PlatformReportCardTemplate::query()->create($this->validated($request));
+        $template = PlatformReportCardTemplate::query()->create($this->validatedTemplateData($request));
 
         return back()->with('status', "{$template->name} report-card template created.");
     }
 
     public function update(Request $request, PlatformReportCardTemplate $platformReportCardTemplate): RedirectResponse
     {
-        $platformReportCardTemplate->update($this->validated($request));
+        $platformReportCardTemplate->update($this->validatedTemplateData($request));
 
         return back()->with('status', "{$platformReportCardTemplate->name} report-card template updated. Schools can reselect it to apply the changes.");
     }
@@ -66,11 +65,12 @@ class ReportCardTemplateController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function validated(Request $request): array
+    private function validatedTemplateData(Request $request): array
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'education_level' => ['required', 'in:creche,nursery,primary,secondary'],
+            'education_levels' => ['required', 'array', 'min:1', 'max:4'],
+            'education_levels.*' => ['required', 'distinct', 'in:creche,nursery,primary,secondary'],
             'term_result_mode' => ['required', 'in:independent,cumulative'],
             'is_active' => ['required', 'boolean'],
             'layout' => ['required', 'array'],
@@ -94,6 +94,8 @@ class ReportCardTemplateController extends Controller
                 throw ValidationException::withMessages(['grading_bands' => 'Each grade minimum must be less than or equal to its maximum.']);
             }
         }
+
+        $validated['education_level'] = $validated['education_levels'][0];
 
         return $validated;
     }

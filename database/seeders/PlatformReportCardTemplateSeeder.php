@@ -16,6 +16,7 @@ class PlatformReportCardTemplateSeeder extends Seeder
             ['name' => 'SAFSIMS-style Secondary Report'],
             [
                 'education_level' => 'secondary',
+                'education_levels' => ['primary', 'secondary'],
                 'term_result_mode' => 'cumulative',
                 'is_active' => true,
                 'layout' => [

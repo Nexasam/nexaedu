@@ -17,9 +17,12 @@ class PlatformReportCardTemplateFactory extends Factory
      */
     public function definition(): array
     {
+        $educationLevel = fake()->randomElement(['creche', 'nursery', 'primary', 'secondary']);
+
         return [
             'name' => fake()->words(3, true),
-            'education_level' => fake()->randomElement(['creche', 'nursery', 'primary', 'secondary']),
+            'education_level' => $educationLevel,
+            'education_levels' => [$educationLevel],
             'term_result_mode' => 'independent',
             'grading_bands' => [
                 ['minimum_score' => 70, 'maximum_score' => 100, 'grade' => 'A', 'remark' => 'Excellent'],

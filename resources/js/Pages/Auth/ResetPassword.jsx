@@ -33,7 +33,7 @@ export default function ResetPassword({ token, email }) {
                     Choose a new password
                 </h1>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Create a fresh password for your SchoolOS account.
+                    Create a fresh password for your NexaEdu account.
                 </p>
             </div>
 

@@ -47,7 +47,7 @@ export default function GuestLayout({ children }) {
                     <Link href="/" className="flex items-center gap-3">
                         <ApplicationLogo className="h-10 w-10 text-emerald-400" />
                         <div>
-                            <div className="text-lg font-bold">SchoolOS</div>
+                            <div className="text-lg font-bold">NexaEdu</div>
                             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
                                 School management
                             </div>
@@ -98,7 +98,7 @@ export default function GuestLayout({ children }) {
                         <Link href="/" className="mb-8 flex items-center gap-3 lg:hidden">
                             <ApplicationLogo className="h-10 w-10 text-emerald-600" />
                             <div>
-                                <div className="text-lg font-bold text-slate-950">SchoolOS</div>
+                                <div className="text-lg font-bold text-slate-950">NexaEdu</div>
                                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">
                                     School management
                                 </div>

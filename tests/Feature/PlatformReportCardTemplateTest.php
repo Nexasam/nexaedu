@@ -24,16 +24,29 @@ class PlatformReportCardTemplateTest extends TestCase
 
         $template = PlatformReportCardTemplate::query()->firstOrFail();
 
-        $this->assertSame('primary', $template->education_level);
+        $this->assertSame(['primary', 'secondary'], $template->education_levels);
         $this->assertSame('A', $template->grading_bands[0]['grade']);
         $this->assertSame(['Excellent', 'Good'], $template->traits[0]['rating_options']);
         $this->assertTrue($template->layout['show_attendance']);
     }
 
+    public function test_platform_admin_must_select_at_least_one_education_level(): void
+    {
+        $admin = User::factory()->platformAdmin()->create();
+        $payload = $this->templatePayload();
+        $payload['education_levels'] = [];
+
+        $this->actingAs($admin)
+            ->post(route('platform.report-card-templates.store'), $payload)
+            ->assertSessionHasErrors('education_levels');
+
+        $this->assertDatabaseCount('platform_report_card_templates', 0);
+    }
+
     public function test_school_selects_a_compatible_platform_template_for_a_class_group(): void
     {
         [$user, $school] = $this->schoolSuperAdmin();
-        $classGroup = ClassGroup::factory()->create(['school_id' => $school->id, 'name' => 'Primary']);
+        $classGroup = ClassGroup::factory()->create(['school_id' => $school->id, 'name' => 'Secondary']);
         $platformTemplate = PlatformReportCardTemplate::factory()->create($this->templatePayload());
         PlatformReportCardTemplateAccess::factory()->create([
             'school_id' => $school->id,
@@ -64,7 +77,7 @@ class PlatformReportCardTemplateTest extends TestCase
     public function test_school_cannot_select_a_template_for_another_education_level(): void
     {
         [$user, $school] = $this->schoolSuperAdmin();
-        $classGroup = ClassGroup::factory()->create(['school_id' => $school->id, 'name' => 'Secondary']);
+        $classGroup = ClassGroup::factory()->create(['school_id' => $school->id, 'name' => 'Creche']);
         $platformTemplate = PlatformReportCardTemplate::factory()->create($this->templatePayload());
         PlatformReportCardTemplateAccess::factory()->create([
             'school_id' => $school->id,
@@ -141,7 +154,7 @@ class PlatformReportCardTemplateTest extends TestCase
     {
         return [
             'name' => 'Platform Primary Report',
-            'education_level' => 'primary',
+            'education_levels' => ['primary', 'secondary'],
             'term_result_mode' => 'independent',
             'is_active' => true,
             'layout' => [

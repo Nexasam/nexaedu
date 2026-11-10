@@ -27,7 +27,9 @@ class SelectReportCardTemplateAction
             throw ValidationException::withMessages(['template' => 'This report-card template has not been granted to your school.']);
         }
 
-        if ($platformTemplate->education_level !== $this->educationLevelFor($classGroup)) {
+        $educationLevels = $platformTemplate->education_levels ?: [$platformTemplate->education_level];
+
+        if (! in_array($this->educationLevelFor($classGroup), $educationLevels, true)) {
             throw ValidationException::withMessages(['template' => 'Select a template configured for this class group level.']);
         }
 

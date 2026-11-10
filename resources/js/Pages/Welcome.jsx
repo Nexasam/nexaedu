@@ -27,7 +27,7 @@ export default function Welcome({ auth }) {
                     <Link href="/" className="flex items-center gap-3">
                         <ApplicationLogo className="h-10 w-10 text-emerald-500" />
                         <div>
-                            <div className="text-lg font-bold">SchoolOS</div>
+                            <div className="text-lg font-bold">NexaEdu</div>
                             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
                                 School management
                             </div>

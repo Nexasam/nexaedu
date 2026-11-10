@@ -48,7 +48,7 @@ export default function ForgotPassword({ status }) {
                         name="email"
                         value={data.email}
                         className="mt-2 block w-full"
-                        placeholder="admin@schoolos.test"
+                        placeholder="admin@nexaedu.test"
                         isFocused={true}
                         onChange={(e) => setData('email', e.target.value)}
                     />

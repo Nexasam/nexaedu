@@ -30,7 +30,7 @@ export default function Login({ status, canResetPassword }) {
                     Welcome back
                 </div>
                 <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-                    Sign in to SchoolOS
+                    Sign in to NexaEdu
                 </h1>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
                     Continue to your school operations dashboard.
@@ -54,7 +54,7 @@ export default function Login({ status, canResetPassword }) {
                         value={data.email}
                         className="mt-2 block w-full"
                         autoComplete="username"
-                        placeholder="admin@schoolos.test"
+                        placeholder="admin@nexaedu.test"
                         isFocused={true}
                         onChange={(e) => setData('email', e.target.value)}
                     />

@@ -30,7 +30,7 @@ export default function Register() {
                     Get started
                 </div>
                 <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-                    Create your SchoolOS account
+                    Create your NexaEdu account
                 </h1>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
                     Set up access for managing your school dashboard.
@@ -66,7 +66,7 @@ export default function Register() {
                         value={data.email}
                         className="mt-2 block w-full"
                         autoComplete="username"
-                        placeholder="admin@schoolos.test"
+                        placeholder="admin@nexaedu.test"
                         onChange={(e) => setData('email', e.target.value)}
                         required
                     />

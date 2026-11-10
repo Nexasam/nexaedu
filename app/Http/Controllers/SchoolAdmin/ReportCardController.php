@@ -45,7 +45,6 @@ class ReportCardController extends Controller
                 ->whereHas('accesses', function ($query) use ($school): void {
                     $query->whereBelongsTo($school)->where('status', 'granted')->whereNull('revoked_at');
                 })
-                ->orderBy('education_level')
                 ->orderBy('name')
                 ->get(),
             'templateSelections' => $school->reportCardTemplateSelections()
