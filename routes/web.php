@@ -21,8 +21,10 @@ use App\Http\Controllers\SchoolAdmin\SchoolOnboardingController;
 use App\Http\Controllers\SchoolAdmin\SchoolReadinessReportController;
 use App\Http\Controllers\SchoolAdmin\SchoolSettingsController;
 use App\Http\Controllers\SchoolAdmin\ScoreEntryController;
+use App\Http\Controllers\SchoolAdmin\StaffImportTemplateController;
 use App\Http\Controllers\SchoolAdmin\StaffSetupController;
 use App\Http\Controllers\SchoolAdmin\StaffSignatureController;
+use App\Http\Controllers\SchoolAdmin\StudentImportTemplateController;
 use App\Http\Controllers\SchoolAdmin\StudentSetupController;
 use App\Http\Controllers\SchoolAdmin\StudentSubjectController;
 use App\Http\Controllers\SchoolAdmin\TeacherAssignmentController;
@@ -78,6 +80,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('school.permission:staff_setup,readwrite')->group(function () {
             Route::post('/staff', [StaffSetupController::class, 'store'])->name('staff.store');
             Route::post('/staff/import', [StaffSetupController::class, 'import'])->name('staff.import');
+            Route::get('/staff/import-template', StaffImportTemplateController::class)->name('staff.import-template');
             Route::post('/staff/{staffProfile}/invite', [StaffSetupController::class, 'invite'])->name('staff.invite');
             Route::post('/staff/{staffProfile}/signature', StaffSignatureController::class)->name('staff.signature');
             Route::put('/school-users/{schoolUser}/permission-overrides', [UserPermissionOverrideController::class, 'update'])->name('school-users.permission-overrides.update');
@@ -95,6 +98,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('school.permission:student_setup,readwrite')->group(function () {
             Route::post('/students', [StudentSetupController::class, 'store'])->name('students.store');
             Route::post('/students/import', [StudentSetupController::class, 'import'])->name('students.import');
+            Route::get('/students/import-template', StudentImportTemplateController::class)->name('students.import-template');
         });
         Route::get('/students/subjects', [StudentSubjectController::class, 'index'])->middleware('school.permission:student_setup,readonly')->name('students.subjects.index');
         Route::get('/assessments', [AssessmentSetupController::class, 'index'])->middleware('school.permission:assessments,readonly')->name('assessments.index');

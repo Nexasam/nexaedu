@@ -6,7 +6,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { Plus, X } from 'lucide-react';
+import { Download, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
 function SelectInput({ id, value, onChange, children }) {
@@ -71,11 +71,9 @@ export default function Index({ students, classArms, sessions }) {
             <div className="space-y-5">
                 {canWrite && (
                 <section className="overflow-hidden rounded-xl border border-[var(--brand-primary-border)] bg-white shadow-sm ring-1 ring-[var(--brand-primary-border)]">
-                    <div className="border-b border-[var(--brand-primary-border)] bg-[var(--brand-primary-soft)] px-4 py-3">
-                        <h2 className="text-sm font-bold text-slate-950">Import students by CSV</h2>
-                        <p className="mt-1 text-sm text-slate-600">
-                            Headers: admission_no, first_name, last_name, gender, date_of_birth, class_arm_id, academic_session_id, term_id, parent_first_name, parent_last_name, parent_email, parent_phone, parent_relationship.
-                        </p>
+                    <div className="flex flex-col gap-3 border-b border-[var(--brand-primary-border)] bg-[var(--brand-primary-soft)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div><h2 className="text-sm font-bold text-slate-950">Import students by CSV</h2><p className="mt-1 text-sm text-slate-600">Download the school-specific template, complete it in Excel, then upload the saved CSV.</p></div>
+                        <a href={route('school.students.import-template')} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-[var(--brand-primary-border)] bg-white px-3 py-2 text-sm font-bold text-[var(--brand-primary)] shadow-sm transition hover:brightness-95"><Download className="h-4 w-4" aria-hidden="true" />Download template</a>
                     </div>
                     <div className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-end">
                         <div className="p-4 text-sm text-slate-600">

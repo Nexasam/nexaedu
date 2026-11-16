@@ -12,6 +12,7 @@ use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class StaffAndStudentSetupTest extends TestCase
@@ -167,6 +168,54 @@ class StaffAndStudentSetupTest extends TestCase
             'school_id' => $school->id,
             'email' => 'bisi.akin@example.test',
         ]);
+    }
+
+    public function test_school_super_admin_can_download_staff_import_template(): void
+    {
+        [$user, $school] = $this->createSchoolSuperAdmin();
+        $school->roles()->create([
+            'name' => 'Teacher',
+            'slug' => 'teacher',
+            'is_system' => true,
+        ]);
+
+        $download = $this->actingAs($user)->get(route('school.staff.import-template'));
+
+        $download->assertOk()->assertDownload(Str::slug($school->name).'-staff-import-template.csv');
+        $content = $download->streamedContent();
+
+        $this->assertStringContainsString('staff_no,first_name,last_name,middle_name,email,phone,gender,role', $content);
+        $this->assertStringContainsString('STAFF-001,Amina,Bello', $content);
+        $this->assertStringContainsString(',teacher,', $content);
+    }
+
+    public function test_school_super_admin_can_download_student_import_template_with_school_placement_ids(): void
+    {
+        [$user, $school] = $this->createSchoolSuperAdmin();
+        [$classArm, $session, $term] = $this->createAcademicPlacement($school);
+
+        $download = $this->actingAs($user)->get(route('school.students.import-template'));
+
+        $download->assertOk()->assertDownload(Str::slug($school->name).'-student-import-template.csv');
+        $content = $download->streamedContent();
+
+        $this->assertStringContainsString('admission_no,first_name,last_name,gender,date_of_birth,class_arm_id,academic_session_id,term_id', $content);
+        $this->assertStringContainsString("ADM-001,David,Ojo,male,2018-02-10,{$classArm->id},{$session->id},{$term->id}", $content);
+    }
+
+    public function test_non_school_super_admin_cannot_download_import_templates(): void
+    {
+        $user = User::factory()->create();
+        $school = School::factory()->approved()->create();
+        $school->users()->create([
+            'user_id' => $user->id,
+            'role' => 'teacher',
+            'status' => 'active',
+        ]);
+        $user->forceFill(['current_school_id' => $school->id])->save();
+
+        $this->actingAs($user)->get(route('school.staff.import-template'))->assertForbidden();
+        $this->actingAs($user)->get(route('school.students.import-template'))->assertForbidden();
     }
 
     public function test_school_super_admin_can_update_and_delete_academic_setup_records(): void

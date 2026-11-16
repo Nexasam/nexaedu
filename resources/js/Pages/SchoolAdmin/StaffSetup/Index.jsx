@@ -6,7 +6,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { PenLine, Plus, Send, SlidersHorizontal, X } from 'lucide-react';
+import { Download, PenLine, Plus, Send, SlidersHorizontal, X } from 'lucide-react';
 import { useState } from 'react';
 
 function SelectInput({ id, value, onChange, children }) {
@@ -190,11 +190,9 @@ export default function Index({ roles, permissionModules, accessLevels, staff })
             <div className="space-y-5">
                 {canWrite && (
                     <section className="overflow-hidden rounded-xl border border-[var(--brand-primary-border)] bg-white shadow-sm ring-1 ring-[var(--brand-primary-border)]">
-                        <div className="border-b border-[var(--brand-primary-border)] bg-[var(--brand-primary-soft)] px-4 py-3">
-                            <h2 className="text-sm font-bold text-slate-950">Import staff by CSV</h2>
-                            <p className="mt-1 text-sm text-slate-600">
-                                Headers: staff_no, first_name, last_name, middle_name, email, phone, gender, role, qualification, specialization, department, job_title, employment_date, employment_type.
-                            </p>
+                        <div className="flex flex-col gap-3 border-b border-[var(--brand-primary-border)] bg-[var(--brand-primary-soft)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div><h2 className="text-sm font-bold text-slate-950">Import staff by CSV</h2><p className="mt-1 text-sm text-slate-600">Download the prepared template, complete it in Excel, then upload the saved CSV.</p></div>
+                            <a href={route('school.staff.import-template')} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-[var(--brand-primary-border)] bg-white px-3 py-2 text-sm font-bold text-[var(--brand-primary)] shadow-sm transition hover:brightness-95"><Download className="h-4 w-4" aria-hidden="true" />Download template</a>
                         </div>
                         <div className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-end">
                             <div className="p-4 text-sm text-slate-600">
