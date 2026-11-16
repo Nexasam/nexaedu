@@ -187,6 +187,18 @@ class StaffAndStudentSetupTest extends TestCase
         $this->assertStringContainsString('staff_no,first_name,last_name,middle_name,email,phone,gender,role', $content);
         $this->assertStringContainsString('STAFF-001,Amina,Bello', $content);
         $this->assertStringContainsString(',teacher,', $content);
+
+        $file = UploadedFile::fake()->createWithContent('staff-template.csv', $content);
+        $this->actingAs($user)
+            ->post(route('school.staff.import'), ['staff_file' => $file])
+            ->assertRedirect()
+            ->assertSessionHas('status', '1 staff records imported.');
+
+        $this->assertDatabaseHas('staff_profiles', [
+            'school_id' => $school->id,
+            'staff_no' => 'STAFF-001',
+            'role' => 'teacher',
+        ]);
     }
 
     public function test_school_super_admin_can_download_student_import_template_with_school_placement_ids(): void
@@ -201,6 +213,19 @@ class StaffAndStudentSetupTest extends TestCase
 
         $this->assertStringContainsString('admission_no,first_name,last_name,gender,date_of_birth,class_arm_id,academic_session_id,term_id', $content);
         $this->assertStringContainsString("ADM-001,David,Ojo,male,2018-02-10,{$classArm->id},{$session->id},{$term->id}", $content);
+
+        $file = UploadedFile::fake()->createWithContent('student-template.csv', $content);
+        $this->actingAs($user)
+            ->post(route('school.students.import'), ['student_file' => $file])
+            ->assertRedirect()
+            ->assertSessionHas('status', '1 student records imported.');
+
+        $this->assertDatabaseHas('student_enrollments', [
+            'school_id' => $school->id,
+            'class_arm_id' => $classArm->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+        ]);
     }
 
     public function test_non_school_super_admin_cannot_download_import_templates(): void

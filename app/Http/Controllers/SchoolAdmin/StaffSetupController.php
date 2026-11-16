@@ -252,7 +252,8 @@ class StaffSetupController extends Controller
             $row = [];
 
             foreach ($headers as $index => $header) {
-                $row[trim((string) $header)] = $values[$index] ?? null;
+                $normalizedHeader = preg_replace('/^\xEF\xBB\xBF/', '', trim((string) $header));
+                $row[$normalizedHeader] = $values[$index] ?? null;
             }
 
             $rows[] = $row;
