@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\SchoolReportCardTemplateSelection;
 use Database\Factories\SchoolFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -196,5 +195,10 @@ class School extends Model
     public function studentReportCards(): HasMany
     {
         return $this->hasMany(StudentReportCard::class);
+    }
+
+    public function impersonationAudits(): HasMany
+    {
+        return $this->hasMany(ImpersonationAudit::class);
     }
 }

@@ -1,5 +1,5 @@
 import Dropdown from '@/Components/Dropdown';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
     BookOpen,
@@ -12,6 +12,7 @@ import {
     Menu,
     School,
     Settings,
+    ShieldAlert,
     ShieldCheck,
     UserCircle,
     UsersRound,
@@ -65,6 +66,7 @@ const adminNavigation = [
 
 const platformNavigation = [
     { label: 'Schools', href: 'platform.schools.index', icon: School },
+    { label: 'Users', href: 'platform.users.index', icon: UsersRound },
     { label: 'Report templates', href: 'platform.report-card-templates.index', icon: ClipboardList },
     { label: 'Maintenance', href: 'platform.maintenance.index', icon: Wrench },
 ];
@@ -108,6 +110,7 @@ function Toast({ message, type, onClose }) {
 export default function AuthenticatedLayout({ title, subtitle, actions, children }) {
     const { auth, errors = {}, flash = {}, currentSchool, school } = usePage().props;
     const user = auth.user;
+    const impersonation = auth.impersonation;
     const isPlatformAdmin = user?.global_role === 'platform_admin';
     const permissions = auth.permissions ?? {};
     const brandedSchool = currentSchool ?? school;
@@ -305,7 +308,26 @@ export default function AuthenticatedLayout({ title, subtitle, actions, children
             )}
 
             <div className="lg:pl-64">
-                <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+                {impersonation?.active && (
+                    <div className="sticky top-0 z-40 flex min-h-12 flex-col justify-between gap-2 border-b border-amber-300 bg-amber-50 px-4 py-2 text-amber-950 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+                        <div className="flex items-center gap-2 text-sm">
+                            <ShieldAlert className="h-4 w-4 shrink-0 text-amber-700" aria-hidden="true" strokeWidth={2.25} />
+                            <span>
+                                <strong>Support view:</strong> signed in as {impersonation.target_name} at {impersonation.school_name}. Actions use this account&apos;s permissions.
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => router.delete(route('platform.impersonations.destroy'))}
+                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-bold text-amber-800 shadow-sm transition hover:bg-amber-100"
+                        >
+                            <LogOut className="h-4 w-4" aria-hidden="true" strokeWidth={2} />
+                            Return to platform admin
+                        </button>
+                    </div>
+                )}
+
+                <header className={`${impersonation?.active ? 'relative' : 'sticky top-0'} z-30 border-b border-slate-200 bg-white/90 backdrop-blur`}>
                     <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
                         <div className="flex min-w-0 items-center gap-3">
                             <button

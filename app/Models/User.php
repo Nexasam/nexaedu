@@ -52,6 +52,16 @@ class User extends Authenticatable
         return $this->hasMany(TeacherProfile::class);
     }
 
+    public function startedImpersonations(): HasMany
+    {
+        return $this->hasMany(ImpersonationAudit::class, 'impersonator_user_id');
+    }
+
+    public function receivedImpersonations(): HasMany
+    {
+        return $this->hasMany(ImpersonationAudit::class, 'target_user_id');
+    }
+
     public function hasSchoolRole(School $school, string ...$roles): bool
     {
         return $this->schoolUsers()

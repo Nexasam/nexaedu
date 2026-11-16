@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Platform\ImpersonationController;
 use App\Http\Controllers\Platform\MaintenanceController;
+use App\Http\Controllers\Platform\PlatformUserController;
 use App\Http\Controllers\Platform\ReportCardTemplateAccessController;
 use App\Http\Controllers\Platform\ReportCardTemplateController as PlatformReportCardTemplateController;
 use App\Http\Controllers\Platform\SchoolApprovalController;
@@ -134,6 +136,10 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('platform.admin')->group(function () {
         Route::get('/platform/schools', [SchoolApprovalController::class, 'index'])->name('platform.schools.index');
+        Route::get('/platform/users', [PlatformUserController::class, 'index'])->name('platform.users.index');
+        Route::post('/platform/users/{user}/impersonation', [ImpersonationController::class, 'store'])
+            ->middleware('throttle:5,1')
+            ->name('platform.impersonations.store');
         Route::post('/platform/schools/{school}/approval', [SchoolApprovalController::class, 'store'])->name('platform.schools.approval.store');
         Route::get('/platform/report-card-templates', [PlatformReportCardTemplateController::class, 'index'])->name('platform.report-card-templates.index');
         Route::post('/platform/report-card-templates', [PlatformReportCardTemplateController::class, 'store'])->name('platform.report-card-templates.store');
@@ -146,6 +152,9 @@ Route::middleware('auth')->group(function () {
             ->middleware(['password.confirm', 'throttle:6,1'])
             ->name('platform.maintenance.store');
     });
+
+    Route::delete('/platform/impersonation', [ImpersonationController::class, 'destroy'])
+        ->name('platform.impersonations.destroy');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

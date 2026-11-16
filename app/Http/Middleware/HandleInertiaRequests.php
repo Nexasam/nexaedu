@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
+use App\Services\Platform\UserImpersonationService;
 use App\Services\Schools\SchoolPermissionService;
 use App\Services\Tenancy\CurrentSchool;
 use Illuminate\Http\Request;
@@ -47,12 +49,23 @@ class HandleInertiaRequests extends Middleware
             'secondary_color' => $school->secondary_color,
             'brand_font' => $school->brand_font,
         ] : null;
+        $impersonator = $request->session()->has(UserImpersonationService::SESSION_IMPERSONATOR_ID)
+            ? User::query()
+                ->select(['id', 'name', 'email'])
+                ->find($request->session()->get(UserImpersonationService::SESSION_IMPERSONATOR_ID))
+            : null;
 
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
                 'permissions' => $permissions,
+                'impersonation' => $impersonator ? [
+                    'active' => true,
+                    'impersonator' => $impersonator,
+                    'target_name' => $request->user()?->name,
+                    'school_name' => $school?->name,
+                ] : null,
             ],
             'flash' => [
                 'status' => $request->session()->get('status'),
