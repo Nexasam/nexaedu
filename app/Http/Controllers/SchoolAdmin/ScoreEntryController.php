@@ -11,6 +11,7 @@ use App\Models\StudentAssessmentScore;
 use App\Models\StudentProfile;
 use App\Models\TeacherProfile;
 use App\Services\Schools\AcademicSessionScoreLock;
+use App\Services\Schools\CsvFileReader;
 use App\Services\Schools\EligibleAssessmentStudents;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class ScoreEntryController extends Controller
         private EligibleAssessmentStudents $eligibleAssessmentStudents,
         private SaveStudentScoresAction $saveStudentScores,
         private AcademicSessionScoreLock $academicSessionScoreLock,
+        private CsvFileReader $csvFileReader,
     ) {}
 
     public function index(Request $request): Response
@@ -225,7 +227,7 @@ class ScoreEntryController extends Controller
         $group = $this->assessmentGroup($school, (int) $validated['assessment_group_id']);
         $this->ensureScoreEntryIsUnlocked($request, $group);
         $eligibleStudents = $this->eligibleAssessmentStudents->forGroup($school, $group)->keyBy('admission_no');
-        $rows = $this->csvRows($request->file('score_file')->getRealPath());
+        $rows = $this->csvFileReader->read($request->file('score_file')->getRealPath(), 'score_file');
         $expectedHeaders = ['admission_no', 'student_name', 'class_arm', 'subject', ...$group->items->pluck('name')->all()];
 
         if (($rows['headers'] ?? []) !== $expectedHeaders) {
@@ -266,7 +268,7 @@ class ScoreEntryController extends Controller
             'score_file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
         ]);
         $groups = $this->assessmentGroups($school, $validated['assessment_group_ids'])->keyBy('id');
-        $rows = $this->csvRows($request->file('score_file')->getRealPath());
+        $rows = $this->csvFileReader->read($request->file('score_file')->getRealPath(), 'score_file');
 
         if (array_slice($rows['headers'] ?? [], 0, count($this->bulkTemplateFixedHeaders())) !== $this->bulkTemplateFixedHeaders()) {
             throw ValidationException::withMessages([
@@ -419,33 +421,5 @@ class ScoreEntryController extends Controller
             ->where('role', 'school_super_admin')
             ->where('status', 'active')
             ->exists();
-    }
-
-    /**
-     * @return array{headers: array<int, string>, records: array<int, array<string, string|null>>}
-     */
-    private function csvRows(string $path): array
-    {
-        $handle = fopen($path, 'r');
-
-        if ($handle === false) {
-            throw ValidationException::withMessages(['score_file' => 'The uploaded file could not be read.']);
-        }
-
-        $headers = fgetcsv($handle);
-        $headers = array_map(fn ($header) => trim((string) $header), $headers ?: []);
-        $records = [];
-
-        while (($row = fgetcsv($handle)) !== false) {
-            if (collect($row)->every(fn ($value) => trim((string) $value) === '')) {
-                continue;
-            }
-
-            $records[] = array_combine($headers, array_slice(array_pad($row, count($headers), null), 0, count($headers)));
-        }
-
-        fclose($handle);
-
-        return ['headers' => $headers, 'records' => $records];
     }
 }

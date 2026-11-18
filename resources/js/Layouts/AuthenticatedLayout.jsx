@@ -41,6 +41,7 @@ const mainNavigation = [
         permission: 'student_setup',
         children: [
             { label: 'Student setup', href: 'school.student-setup.index', permission: 'student_setup' },
+            { label: 'Session rollover', href: 'school.students.rollover.index', permission: 'student_setup' },
             { label: 'Subjects & teachers', href: 'school.students.subjects.index', permission: 'student_setup' },
         ],
     },

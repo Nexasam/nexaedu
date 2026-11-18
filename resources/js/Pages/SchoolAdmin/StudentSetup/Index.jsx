@@ -6,7 +6,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { Download, Plus, X } from 'lucide-react';
+import { Download, Pencil, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
 function SelectInput({ id, value, onChange, children }) {
@@ -26,6 +26,7 @@ export default function Index({ students, classArms, sessions }) {
     const { auth } = usePage().props;
     const canWrite = auth.permissions?.student_setup === 'readwrite';
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingStudent, setEditingStudent] = useState(null);
     const form = useForm({
         admission_no: '',
         first_name: '',
@@ -40,19 +41,59 @@ export default function Index({ students, classArms, sessions }) {
         parent_email: '',
         parent_phone: '',
         parent_relationship: '',
+        enrollment_id: '',
+        status: 'active',
     });
     const importForm = useForm({ student_file: null });
     const activeSession = sessions.find((session) => String(session.id) === String(form.data.academic_session_id));
 
     const submit = (event) => {
         event.preventDefault();
-        form.post(route('school.students.store'), {
+        const options = {
             preserveScroll: true,
             onSuccess: () => {
                 form.reset();
                 setShowCreateModal(false);
+                setEditingStudent(null);
             },
+        };
+
+        if (editingStudent) {
+            form.put(route('school.students.update', editingStudent.id), options);
+        } else {
+            form.post(route('school.students.store'), options);
+        }
+    };
+
+    const openCreate = () => {
+        setEditingStudent(null);
+        form.reset();
+        form.clearErrors();
+        setShowCreateModal(true);
+    };
+
+    const openEdit = (student) => {
+        const enrollment = student.enrollments?.[0];
+        const parent = student.parents?.[0];
+        setEditingStudent(student);
+        form.setData({
+            admission_no: student.admission_no ?? '', first_name: student.first_name ?? '', last_name: student.last_name ?? '',
+            gender: student.gender ?? '', date_of_birth: student.date_of_birth?.slice(0, 10) ?? '',
+            class_arm_id: enrollment?.class_arm_id ?? '', academic_session_id: enrollment?.academic_session_id ?? '',
+            term_id: enrollment?.term_id ?? '', enrollment_id: enrollment?.id ?? '', status: student.status ?? 'active',
+            parent_first_name: parent?.first_name ?? '', parent_last_name: parent?.last_name ?? '',
+            parent_email: parent?.email ?? '', parent_phone: parent?.phone ?? '',
+            parent_relationship: parent?.pivot?.relationship ?? '',
         });
+        form.clearErrors();
+        setShowCreateModal(true);
+    };
+
+    const closeStudentModal = () => {
+        setShowCreateModal(false);
+        setEditingStudent(null);
+        form.reset();
+        form.clearErrors();
     };
 
     const importStudents = (event) => {
@@ -101,7 +142,7 @@ export default function Index({ students, classArms, sessions }) {
                 <div>
                     <button
                         type="button"
-                        onClick={() => setShowCreateModal(true)}
+                        onClick={openCreate}
                         className="inline-flex items-center gap-2 rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-95"
                     >
                         <Plus className="h-4 w-4" aria-hidden="true" strokeWidth={2.25} />
@@ -114,10 +155,10 @@ export default function Index({ students, classArms, sessions }) {
                     <form onSubmit={submit}>
                         <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4">
                             <div>
-                                <h2 className="text-base font-bold text-slate-950">Add student</h2>
-                                <p className="mt-1 text-sm text-slate-500">Register a student and optional guardian details.</p>
+                                <h2 className="text-base font-bold text-slate-950">{editingStudent ? 'Edit student' : 'Add student'}</h2>
+                                <p className="mt-1 text-sm text-slate-500">{editingStudent ? 'Update biodata, current placement, status, and guardian details.' : 'Register a student and optional guardian details.'}</p>
                             </div>
-                            <button type="button" onClick={() => setShowCreateModal(false)} className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white text-slate-500 hover:text-slate-900" aria-label="Close">
+                            <button type="button" onClick={closeStudentModal} className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white text-slate-500 hover:text-slate-900" aria-label="Close">
                                 <X className="h-4 w-4" aria-hidden="true" strokeWidth={2.25} />
                             </button>
                         </div>
@@ -195,6 +236,19 @@ export default function Index({ students, classArms, sessions }) {
                             </SelectInput>
                         </div>
 
+                        {editingStudent && (
+                            <div className="max-w-sm">
+                                <InputLabel htmlFor="student_status" value="Student status" />
+                                <SelectInput id="student_status" value={form.data.status} onChange={(event) => form.setData('status', event.target.value)}>
+                                    <option value="active">Active</option>
+                                    <option value="withdrawn">Withdrawn</option>
+                                    <option value="graduated">Graduated</option>
+                                    <option value="archived">Archived</option>
+                                </SelectInput>
+                                <InputError message={form.errors.status} className="mt-1" />
+                            </div>
+                        )}
+
                         <div className="border-t border-slate-200 pt-4">
                             <h2 className="text-sm font-bold text-slate-950">Parent or guardian</h2>
                             <div className="mt-3 grid gap-4 md:grid-cols-3">
@@ -226,7 +280,7 @@ export default function Index({ students, classArms, sessions }) {
 
                         </div>
                         <div className="flex justify-end border-t border-slate-200 px-5 py-4">
-                            <PrimaryButton disabled={form.processing}>Save student</PrimaryButton>
+                            <PrimaryButton disabled={form.processing}>{editingStudent ? 'Update student' : 'Save student'}</PrimaryButton>
                         </div>
                     </form>
                 </Modal>
@@ -249,6 +303,14 @@ export default function Index({ students, classArms, sessions }) {
                         { key: 'class_arm', label: 'Class arm', className: 'text-slate-600', render: (student) => student.enrollments?.[0]?.class_arm?.name ?? 'Not placed', sortValue: (student) => student.enrollments?.[0]?.class_arm?.name ?? '' },
                         { key: 'guardian', label: 'Guardian', className: 'text-slate-600', render: (student) => student.parents?.[0] ? `${student.parents[0].first_name} ${student.parents[0].last_name}` : 'No guardian', sortValue: (student) => student.parents?.[0] ? `${student.parents[0].first_name} ${student.parents[0].last_name}` : '' },
                         { key: 'status', label: 'Status', className: 'capitalize text-slate-600' },
+                        {
+                            key: 'actions', label: '', sortable: false, headerClassName: 'text-right', className: 'text-right',
+                            render: (student) => canWrite && (
+                                <button type="button" onClick={() => openEdit(student)} className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition hover:border-[var(--brand-primary-border)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]" title="Edit student">
+                                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                                </button>
+                            ),
+                        },
                     ]}
                     rows={students}
                     emptyLabel="No students yet."

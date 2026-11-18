@@ -27,6 +27,7 @@ use App\Http\Controllers\SchoolAdmin\StaffImportTemplateController;
 use App\Http\Controllers\SchoolAdmin\StaffSetupController;
 use App\Http\Controllers\SchoolAdmin\StaffSignatureController;
 use App\Http\Controllers\SchoolAdmin\StudentImportTemplateController;
+use App\Http\Controllers\SchoolAdmin\StudentRolloverController;
 use App\Http\Controllers\SchoolAdmin\StudentSetupController;
 use App\Http\Controllers\SchoolAdmin\StudentSubjectController;
 use App\Http\Controllers\SchoolAdmin\TeacherAssignmentController;
@@ -81,6 +82,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/staff-setup', [StaffSetupController::class, 'index'])->middleware('school.permission:staff_setup,readonly')->name('staff-setup.index');
         Route::middleware('school.permission:staff_setup,readwrite')->group(function () {
             Route::post('/staff', [StaffSetupController::class, 'store'])->name('staff.store');
+            Route::put('/staff/{staffProfile}', [StaffSetupController::class, 'update'])->name('staff.update');
             Route::post('/staff/import', [StaffSetupController::class, 'import'])->name('staff.import');
             Route::get('/staff/import-template', StaffImportTemplateController::class)->name('staff.import-template');
             Route::post('/staff/{staffProfile}/invite', [StaffSetupController::class, 'invite'])->name('staff.invite');
@@ -97,10 +99,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/roles-permissions', [RolePermissionController::class, 'index'])->middleware('school.permission:role_permissions,readonly')->name('roles-permissions.index');
         Route::put('/roles/{schoolRole}/permissions', [RolePermissionController::class, 'update'])->middleware('school.permission:role_permissions,readwrite')->name('roles.permissions.update');
         Route::get('/student-setup', [StudentSetupController::class, 'index'])->middleware('school.permission:student_setup,readonly')->name('student-setup.index');
+        Route::get('/student-rollover', [StudentRolloverController::class, 'index'])->middleware('school.permission:student_setup,readonly')->name('students.rollover.index');
         Route::middleware('school.permission:student_setup,readwrite')->group(function () {
             Route::post('/students', [StudentSetupController::class, 'store'])->name('students.store');
+            Route::put('/students/{studentProfile}', [StudentSetupController::class, 'update'])->name('students.update');
             Route::post('/students/import', [StudentSetupController::class, 'import'])->name('students.import');
             Route::get('/students/import-template', StudentImportTemplateController::class)->name('students.import-template');
+            Route::post('/student-rollover', [StudentRolloverController::class, 'store'])->name('students.rollover.store');
         });
         Route::get('/students/subjects', [StudentSubjectController::class, 'index'])->middleware('school.permission:student_setup,readonly')->name('students.subjects.index');
         Route::get('/assessments', [AssessmentSetupController::class, 'index'])->middleware('school.permission:assessments,readonly')->name('assessments.index');

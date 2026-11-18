@@ -12,6 +12,7 @@ use App\Models\SchoolClass;
 use App\Models\StudentAssessmentScore;
 use App\Models\StudentProfile;
 use App\Models\Subject;
+use App\Models\TeacherProfile;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -67,6 +68,63 @@ class AcademicSessionWorkflowTest extends TestCase
         ])->assertForbidden();
     }
 
+    public function test_unchecked_options_do_not_copy_enrollments_teacher_assignments_or_assessment_flows(): void
+    {
+        [$user, $school] = $this->createSchoolSuperAdmin();
+        [$session, $term, $classTermSubject, $assessmentGroup, $student] = $this->createSessionStructure($school);
+        $assessmentGroup->items()->create([
+            'school_id' => $school->id,
+            'name' => 'Exam',
+            'max_score' => 100,
+            'sort_order' => 1,
+        ]);
+        $teacher = $this->assignTeacher($school, $session, $term, $classTermSubject);
+
+        $this->actingAs($user)->post(route('school.academic-sessions.duplicate', $session), [
+            'name' => '2027/2028',
+            'is_current' => false,
+            'copy_enrollments' => false,
+            'copy_teacher_assignments' => false,
+            'copy_assessment_flows' => false,
+        ])->assertRedirect();
+
+        $newSession = AcademicSession::query()->whereBelongsTo($school)->where('name', '2027/2028')->firstOrFail();
+        $newSubjectIds = ClassTermSubject::query()->whereBelongsTo($newSession)->pluck('id');
+
+        $this->assertDatabaseMissing('student_enrollments', [
+            'student_profile_id' => $student->id,
+            'academic_session_id' => $newSession->id,
+        ]);
+        $this->assertDatabaseMissing('teacher_class_arms', [
+            'teacher_profile_id' => $teacher->id,
+            'academic_session_id' => $newSession->id,
+        ]);
+        $this->assertSame(0, AssessmentGroup::query()->whereIn('class_term_subject_id', $newSubjectIds)->count());
+        $this->assertSame(0, $school->teacherClassTermSubjects()->whereIn('class_term_subject_id', $newSubjectIds)->count());
+    }
+
+    public function test_omitted_duplicate_options_are_normalized_to_false(): void
+    {
+        [$user, $school] = $this->createSchoolSuperAdmin();
+        [$session, , $classTermSubject, , $student] = $this->createSessionStructure($school);
+
+        $this->actingAs($user)->post(route('school.academic-sessions.duplicate', $session), [
+            'name' => '2027/2028',
+        ])->assertRedirect();
+
+        $newSession = AcademicSession::query()->whereBelongsTo($school)->where('name', '2027/2028')->firstOrFail();
+        $newSubject = ClassTermSubject::query()->whereBelongsTo($newSession)->firstOrFail();
+
+        $this->assertDatabaseMissing('student_enrollments', [
+            'student_profile_id' => $student->id,
+            'academic_session_id' => $newSession->id,
+        ]);
+        $this->assertDatabaseMissing('assessment_groups', [
+            'class_term_subject_id' => $newSubject->id,
+        ]);
+        $this->assertNotSame($classTermSubject->id, $newSubject->id);
+    }
+
     /** @return array{AcademicSession, Term, ClassTermSubject, AssessmentGroup, StudentProfile} */
     private function createSessionStructure(School $school): array
     {
@@ -95,6 +153,27 @@ class AcademicSessionWorkflowTest extends TestCase
         ]);
 
         return [$session, $term, $classTermSubject, $assessmentGroup, $student];
+    }
+
+    private function assignTeacher(School $school, AcademicSession $session, Term $term, ClassTermSubject $classTermSubject): TeacherProfile
+    {
+        $teacherUser = User::factory()->create(['current_school_id' => $school->id]);
+        $teacher = $school->teacherProfiles()->create([
+            'user_id' => $teacherUser->id,
+            'staff_no' => 'TEACHER-001',
+        ]);
+        $school->teacherClassArms()->create([
+            'teacher_profile_id' => $teacher->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'class_arm_id' => $classTermSubject->class_arm_id,
+        ]);
+        $school->teacherClassTermSubjects()->create([
+            'teacher_profile_id' => $teacher->id,
+            'class_term_subject_id' => $classTermSubject->id,
+        ]);
+
+        return $teacher;
     }
 
     /** @return array{User, School} */

@@ -140,7 +140,7 @@ class ScoreLockTest extends TestCase
         $this->assertStringContainsString('assessment_group_id,student_profile_id,admission_no', $download->streamedContent());
         $this->assertStringContainsString('Exam / 100 [item:'.$item->id.']', $download->streamedContent());
 
-        $csv = implode(',', [
+        $csv = "\xEF\xBB\xBF".implode(',', [
             'assessment_group_id',
             'student_profile_id',
             'admission_no',

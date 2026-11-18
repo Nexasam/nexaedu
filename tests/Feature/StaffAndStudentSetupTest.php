@@ -116,6 +116,36 @@ class StaffAndStudentSetupTest extends TestCase
         ]);
     }
 
+    public function test_one_parent_account_can_be_linked_to_multiple_children(): void
+    {
+        [$user, $school] = $this->createSchoolSuperAdmin();
+        [$classArm, $session, $term] = $this->createAcademicPlacement($school);
+        $guardian = [
+            'parent_first_name' => 'Grace',
+            'parent_last_name' => 'Ojo',
+            'parent_email' => 'grace.ojo@example.test',
+            'parent_phone' => '08020000000',
+            'parent_relationship' => 'mother',
+        ];
+
+        foreach ([['ADM-001', 'David'], ['ADM-002', 'Sarah']] as [$admissionNumber, $firstName]) {
+            $this->actingAs($user)->post(route('school.students.store'), [
+                'admission_no' => $admissionNumber,
+                'first_name' => $firstName,
+                'last_name' => 'Ojo',
+                'class_arm_id' => $classArm->id,
+                'academic_session_id' => $session->id,
+                'term_id' => $term->id,
+                ...$guardian,
+            ])->assertRedirect()->assertSessionHasNoErrors();
+        }
+
+        $this->assertDatabaseCount('parent_profiles', 1);
+        $this->assertDatabaseCount('parent_student', 2);
+        $this->assertSame(1, User::query()->where('email', 'grace.ojo@example.test')->count());
+        $this->assertSame(2, $school->parentProfiles()->firstOrFail()->students()->count());
+    }
+
     public function test_school_super_admin_can_import_staff_from_csv(): void
     {
         [$user, $school] = $this->createSchoolSuperAdmin();
@@ -138,6 +168,53 @@ class StaffAndStudentSetupTest extends TestCase
             'school_id' => $school->id,
             'staff_no' => 'STAFF-CSV-1',
         ]);
+    }
+
+    public function test_staff_import_is_atomic_when_a_later_row_is_invalid(): void
+    {
+        [$user, $school] = $this->createSchoolSuperAdmin();
+        $file = UploadedFile::fake()->createWithContent(
+            'staff.csv',
+            "\xEF\xBB\xBFstaff_no,first_name,last_name,email,role\nSTAFF-OK,Amina,Bello,amina@example.test,teacher\nSTAFF-BAD,,Cole,cole@example.test,teacher\n\n",
+        );
+
+        $this->actingAs($user)
+            ->post(route('school.staff.import'), ['staff_file' => $file])
+            ->assertSessionHasErrors('first_name');
+
+        $this->assertDatabaseMissing('staff_profiles', ['school_id' => $school->id, 'staff_no' => 'STAFF-OK']);
+    }
+
+    public function test_school_super_admin_can_edit_staff_and_student_records(): void
+    {
+        [$user, $school] = $this->createSchoolSuperAdmin();
+        [$classArm, $session, $term] = $this->createAcademicPlacement($school);
+
+        $this->actingAs($user)->post(route('school.staff.store'), [
+            'staff_no' => 'STAFF-EDIT', 'first_name' => 'Amina', 'last_name' => 'Bello',
+            'email' => 'amina@example.test', 'role' => 'teacher',
+        ]);
+        $staff = $school->staffProfiles()->where('staff_no', 'STAFF-EDIT')->firstOrFail();
+        $this->actingAs($user)->put(route('school.staff.update', $staff), [
+            'staff_no' => 'STAFF-EDIT', 'first_name' => 'Amina', 'last_name' => 'Okafor',
+            'email' => 'amina@example.test', 'role' => 'teacher', 'qualification' => 'M.Ed',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->actingAs($user)->post(route('school.students.store'), [
+            'admission_no' => 'ADM-EDIT', 'first_name' => 'Tola', 'last_name' => 'Akin',
+            'class_arm_id' => $classArm->id, 'academic_session_id' => $session->id, 'term_id' => $term->id,
+        ]);
+        $student = $school->studentProfiles()->where('admission_no', 'ADM-EDIT')->firstOrFail();
+        $enrollment = $student->enrollments()->firstOrFail();
+        $this->actingAs($user)->put(route('school.students.update', $student), [
+            'admission_no' => 'ADM-EDIT', 'first_name' => 'Tola', 'last_name' => 'Adeyemi',
+            'class_arm_id' => $classArm->id, 'academic_session_id' => $session->id, 'term_id' => $term->id,
+            'enrollment_id' => $enrollment->id, 'status' => 'active',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('staff_profiles', ['id' => $staff->id, 'last_name' => 'Okafor', 'qualification' => 'M.Ed']);
+        $this->assertDatabaseHas('users', ['id' => $staff->user_id, 'name' => 'Amina Okafor']);
+        $this->assertDatabaseHas('student_profiles', ['id' => $student->id, 'last_name' => 'Adeyemi']);
     }
 
     public function test_school_super_admin_can_import_students_from_csv(): void

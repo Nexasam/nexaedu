@@ -9,6 +9,7 @@ use App\Models\SchoolUser;
 use App\Models\StaffProfile;
 use App\Models\User;
 use App\Notifications\StaffPortalInvite;
+use App\Services\Schools\CsvFileReader;
 use App\Services\Schools\PermissionCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -28,7 +28,10 @@ class StaffSetupController extends Controller
      */
     private array $roles = ['teacher', 'admin', 'cleaner', 'gateman', 'bursar', 'nurse', 'librarian'];
 
-    public function __construct(private PermissionCatalog $permissionCatalog) {}
+    public function __construct(
+        private PermissionCatalog $permissionCatalog,
+        private CsvFileReader $csvFileReader,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -74,20 +77,21 @@ class StaffSetupController extends Controller
             'staff_file' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
         ]);
 
-        $rows = $this->readCsv($request->file('staff_file')->getRealPath());
+        $rows = $this->csvFileReader->read($request->file('staff_file')->getRealPath(), 'staff_file')['records'];
         $created = 0;
 
-        foreach ($rows as $index => $row) {
-            $validator = Validator::make($row, $this->staffRules($school), [], [
-                'staff_no' => 'staff no on row '.($index + 2),
-                'first_name' => 'first name on row '.($index + 2),
-                'last_name' => 'last name on row '.($index + 2),
-                'role' => 'role on row '.($index + 2),
-            ]);
+        DB::transaction(function () use ($rows, $school, &$created): void {
+            foreach ($rows as $index => $row) {
+                $rowNumber = $index + 2;
+                $attributes = collect(array_keys($this->staffRules($school)))
+                    ->mapWithKeys(fn (string $field): array => [$field => str($field)->replace('_', ' ')->append(" on row {$rowNumber}")->toString()])
+                    ->all();
+                $validator = Validator::make($row, $this->staffRules($school), [], $attributes);
 
-            $this->createStaff($school, $validator->validate());
-            $created++;
-        }
+                $this->createStaff($school, $validator->validate());
+                $created++;
+            }
+        });
 
         return back()->with('status', "{$created} staff records imported.");
     }
@@ -95,22 +99,24 @@ class StaffSetupController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function validateStaff(Request $request, School $school): array
+    private function validateStaff(Request $request, School $school, ?StaffProfile $staffProfile = null): array
     {
-        return $request->validate($this->staffRules($school));
+        return $request->validate($this->staffRules($school, $staffProfile));
     }
 
     /**
      * @return array<string, array<int, mixed>>
      */
-    private function staffRules(School $school): array
+    private function staffRules(School $school, ?StaffProfile $staffProfile = null): array
     {
+        $userId = $staffProfile?->user_id;
+
         return [
-            'staff_no' => ['nullable', 'string', 'max:50', Rule::unique('staff_profiles')->where('school_id', $school->id)],
+            'staff_no' => ['nullable', 'string', 'max:50', Rule::unique('staff_profiles')->where('school_id', $school->id)->ignore($staffProfile?->id)],
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
             'middle_name' => ['nullable', 'string', 'max:100'],
-            'email' => ['nullable', 'email', 'max:255', Rule::unique('staff_profiles')->where('school_id', $school->id), Rule::unique('users', 'email')],
+            'email' => [Rule::requiredIf($staffProfile?->user_id !== null), 'nullable', 'email', 'max:255', Rule::unique('staff_profiles')->where('school_id', $school->id)->ignore($staffProfile?->id), Rule::unique('users', 'email')->ignore($userId)],
             'phone' => ['nullable', 'string', 'max:40'],
             'gender' => ['nullable', 'string', 'max:30'],
             'role' => ['required', Rule::exists('school_roles', 'slug')->where('school_id', $school->id)],
@@ -125,6 +131,47 @@ class StaffSetupController extends Controller
             'employment_type' => ['nullable', 'string', 'max:50'],
             'send_invite' => ['sometimes', 'boolean'],
         ];
+    }
+
+    public function update(Request $request, StaffProfile $staffProfile): RedirectResponse
+    {
+        $school = $this->authorizeSchoolSuperAdmin($request);
+        abort_unless($staffProfile->school_id === $school->id, 404);
+        $this->ensureDefaultRoles($school);
+        $validated = $this->validateStaff($request, $school, $staffProfile);
+
+        DB::transaction(function () use ($school, $staffProfile, $validated): void {
+            $schoolRole = $school->roles()->where('slug', $validated['role'])->firstOrFail();
+            unset($validated['send_invite']);
+            $staffProfile->update($validated);
+
+            if ($staffProfile->user) {
+                $staffProfile->user->update([
+                    'name' => $staffProfile->first_name.' '.$staffProfile->last_name,
+                    'email' => $staffProfile->email,
+                ]);
+                $school->users()->whereBelongsTo($staffProfile->user)->update([
+                    'role' => $schoolRole->slug,
+                    'school_role_id' => $schoolRole->id,
+                ]);
+            }
+
+            if ($staffProfile->role === 'teacher') {
+                $teacher = $school->teacherProfiles()->firstOrCreate(
+                    ['staff_profile_id' => $staffProfile->id],
+                    ['user_id' => $staffProfile->user_id],
+                );
+                $teacher->update([
+                    'user_id' => $staffProfile->user_id,
+                    'staff_no' => $staffProfile->staff_no,
+                    'phone' => $staffProfile->phone,
+                    'gender' => $staffProfile->gender,
+                    'employment_date' => $staffProfile->employment_date,
+                ]);
+            }
+        });
+
+        return back()->with('status', 'Staff member updated.');
     }
 
     /**
@@ -224,44 +271,6 @@ class StaffSetupController extends Controller
                 );
             }
         }
-    }
-
-    /**
-     * @return array<int, array<string, string|null>>
-     */
-    private function readCsv(string $path): array
-    {
-        $handle = fopen($path, 'r');
-
-        if ($handle === false) {
-            throw ValidationException::withMessages([
-                'staff_file' => 'The staff import file could not be opened.',
-            ]);
-        }
-
-        $headers = fgetcsv($handle);
-        $rows = [];
-
-        if ($headers === false) {
-            fclose($handle);
-
-            return $rows;
-        }
-
-        while (($values = fgetcsv($handle)) !== false) {
-            $row = [];
-
-            foreach ($headers as $index => $header) {
-                $normalizedHeader = preg_replace('/^\xEF\xBB\xBF/', '', trim((string) $header));
-                $row[$normalizedHeader] = $values[$index] ?? null;
-            }
-
-            $rows[] = $row;
-        }
-
-        fclose($handle);
-
-        return $rows;
     }
 
     private function authorizeSchoolSuperAdmin(Request $request): School

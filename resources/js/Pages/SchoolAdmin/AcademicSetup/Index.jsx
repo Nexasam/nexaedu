@@ -149,7 +149,7 @@ export default function Index({ classGroups, classes, classArms, sessions, schoo
     const defaultGroupsForm = useForm({});
     const defaultClassesForm = useForm({});
     const subjectBulkForm = useForm({ subject_ids: [] });
-    const duplicateForm = useForm({ name: '', starts_on: '', ends_on: '', is_current: false, copy_enrollments: true, copy_teacher_assignments: true, copy_assessment_flows: true });
+    const duplicateForm = useForm({ name: '', starts_on: '', ends_on: '', is_current: false, copy_enrollments: false, copy_teacher_assignments: false, copy_assessment_flows: true });
     const scoreLockForm = useForm({ score_entries_locked: false, score_lock_at: '', score_unlock_at: '' });
 
     const steps = [
@@ -186,7 +186,7 @@ export default function Index({ classGroups, classes, classArms, sessions, schoo
         setAddAnother(false);
     };
     const openDuplicateSession = (session) => {
-        duplicateForm.setData({ name: '', starts_on: '', ends_on: '', is_current: false, copy_enrollments: true, copy_teacher_assignments: true, copy_assessment_flows: true });
+        duplicateForm.setData({ name: '', starts_on: '', ends_on: '', is_current: false, copy_enrollments: false, copy_teacher_assignments: false, copy_assessment_flows: true });
         duplicateForm.clearErrors();
         setDuplicateSession(session);
     };
@@ -760,7 +760,7 @@ export default function Index({ classGroups, classes, classArms, sessions, schoo
                     {duplicateSession && (
                         <form onSubmit={submitDuplicateSession}>
                             <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4">
-                                <div><h2 className="text-base font-bold text-slate-950">Duplicate {duplicateSession.name}</h2><p className="mt-1 text-sm text-slate-500">Create a new session using this academic structure. Existing scores and completion states will not be copied.</p></div>
+                                <div><h2 className="text-base font-bold text-slate-950">Duplicate {duplicateSession.name}</h2><p className="mt-1 text-sm text-slate-500">Create a new session using this academic structure. Students and teachers are excluded by default, while scores and completion states are never copied.</p></div>
                                 <button type="button" onClick={() => setDuplicateSession(null)} className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white text-slate-500 hover:text-slate-900" aria-label="Close"><X className="h-4 w-4" aria-hidden="true" /></button>
                             </div>
                             <div className="grid gap-4 p-5">
@@ -773,7 +773,7 @@ export default function Index({ classGroups, classes, classArms, sessions, schoo
                                     <div className="text-sm font-bold text-slate-950">Include in the new session</div>
                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                         {[
-                                            ['copy_enrollments', 'Student enrollments'],
+                                            ['copy_enrollments', 'Student enrollments in their current classes'],
                                             ['copy_teacher_assignments', 'Teacher assignments'],
                                             ['copy_assessment_flows', 'Assessment flows'],
                                             ['is_current', 'Make this the current session'],

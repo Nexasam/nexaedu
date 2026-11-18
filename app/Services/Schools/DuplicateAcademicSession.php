@@ -13,11 +13,11 @@ use Illuminate\Support\Facades\DB;
 
 class DuplicateAcademicSession
 {
-    /** @param array{name: string, starts_on?: string|null, ends_on?: string|null, is_current?: bool, copy_enrollments?: bool, copy_teacher_assignments?: bool, copy_assessment_flows?: bool} $data */
+    /** @param array{name: string, starts_on?: string|null, ends_on?: string|null, is_current: bool, copy_enrollments: bool, copy_teacher_assignments: bool, copy_assessment_flows: bool} $data */
     public function handle(School $school, AcademicSession $sourceSession, array $data): AcademicSession
     {
         return DB::transaction(function () use ($school, $sourceSession, $data): AcademicSession {
-            if ($data['is_current'] ?? false) {
+            if ($data['is_current']) {
                 $school->academicSessions()->update(['is_current' => false]);
                 $school->terms()->update(['is_current' => false]);
             }
@@ -26,7 +26,7 @@ class DuplicateAcademicSession
                 'name' => $data['name'],
                 'starts_on' => $data['starts_on'] ?? null,
                 'ends_on' => $data['ends_on'] ?? null,
-                'is_current' => $data['is_current'] ?? false,
+                'is_current' => $data['is_current'],
             ]);
 
             $sourceSession->load([
@@ -55,17 +55,17 @@ class DuplicateAcademicSession
                     ]);
                     $subjectMap[$sourceSubject->id] = $newSubject->id;
 
-                    if ($data['copy_assessment_flows'] ?? true) {
+                    if ($data['copy_assessment_flows']) {
                         $this->copyLatestAssessmentFlow($school, $sourceSubject, $newSubject);
                     }
                 }
             }
 
-            if ($data['copy_enrollments'] ?? true) {
+            if ($data['copy_enrollments']) {
                 $this->copyEnrollments($school, $sourceSession, $newSession, $termMap);
             }
 
-            if ($data['copy_teacher_assignments'] ?? true) {
+            if ($data['copy_teacher_assignments']) {
                 $this->copyTeacherAssignments($school, $sourceSession, $newSession, $termMap, $subjectMap);
             }
 

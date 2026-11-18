@@ -1,0 +1,317 @@
+NEXAEDU GENERAL PILOT TEST AND DEMONSTRATION FLOW
+=================================================
+
+Purpose
+-------
+Use this checklist for internal quality assurance, assisted school testing, and
+the final walkthrough with the proprietor. During rehearsal, use temporary
+records rather than the school's final records. During the proprietor session,
+use approved sample records and focus on the complete school workflow.
+
+For every section, record PASS or FAIL. If a step fails, send:
+
+1. The section and step number.
+2. What you expected to happen.
+3. What actually happened.
+4. A screenshot of the page and error message.
+5. The CSV file used, if the problem involves an import.
+
+
+PREPARATION
+-----------
+
+[ ] P1. Log in as the school super administrator.
+[ ] P2. Confirm that the school has at least two academic sessions.
+[ ] P3. Confirm that the school has class groups, classes and class arms.
+[ ] P4. If a class does not normally use arms, create one arm named "A" or
+        "General" for that class.
+[ ] P5. Confirm that the destination session has at least one term.
+[ ] P6. Create or identify two destination class arms for promotion testing.
+
+
+TEST 1 - SESSION DUPLICATION OPTIONS
+------------------------------------
+
+Goal: Confirm that unchecked options are not copied accidentally.
+
+[ ] 1.1 Open Academic setup and go to Academic sessions.
+[ ] 1.2 Choose a session containing students, teacher assignments and assessment
+        flows, then click Duplicate.
+[ ] 1.3 Enter a unique new session name.
+[ ] 1.4 Leave "Student enrollments" unchecked.
+[ ] 1.5 Leave "Teacher assignments" unchecked.
+[ ] 1.6 Leave "Make this the current session" unchecked.
+[ ] 1.7 Leave assessment flows selected for this first test.
+[ ] 1.8 Duplicate the session.
+
+Expected result:
+
+[ ] The new session and its terms are created.
+[ ] Academic subjects and selected assessment flows are available.
+[ ] No student is enrolled in the new session.
+[ ] No teacher assignment is copied into the new session.
+[ ] The previous current session remains current.
+
+[ ] 1.9 Repeat with assessment flows also unchecked and another unique session
+        name.
+
+Expected result:
+
+[ ] The new session structure is created without assessment flows.
+[ ] Students and teacher assignments are still not copied.
+
+
+TEST 2 - ONE PARENT WITH MULTIPLE CHILDREN
+------------------------------------------
+
+Goal: Confirm that siblings can share one parent account.
+
+[ ] 2.1 Open Student setup and add the first temporary student.
+[ ] 2.2 Enter a new parent name, email address, phone number and relationship.
+[ ] 2.3 Save the student.
+[ ] 2.4 Add a second temporary student.
+[ ] 2.5 Enter exactly the same parent email address used for the first student.
+[ ] 2.6 Save the second student.
+
+Expected result:
+
+[ ] Both students are created successfully.
+[ ] No duplicate-email error is displayed.
+[ ] Both students show the same parent/guardian.
+[ ] Only one parent account/profile exists for that email address.
+
+[ ] 2.7 Try the same process through the student CSV import by placing two
+        siblings with the same parent email in the file.
+
+Expected result:
+
+[ ] Both students import successfully.
+[ ] Both are connected to the same parent profile.
+
+
+TEST 3 - STAFF/TEACHER CSV IMPORT
+---------------------------------
+
+Goal: Confirm that the downloaded staff template imports correctly after being
+edited in Excel.
+
+[ ] 3.1 Open Staff setup.
+[ ] 3.2 Download the current staff import template from the page.
+[ ] 3.3 Open it in Excel.
+[ ] 3.4 Replace the sample with at least two new staff records.
+[ ] 3.5 Include at least one teacher with qualification, specialization,
+        department and job title.
+[ ] 3.6 Use a valid configured role value such as teacher, admin or bursar.
+[ ] 3.7 Save/export the file as CSV, keeping the original column headings.
+[ ] 3.8 Upload and import the CSV.
+
+Expected result:
+
+[ ] The number of imported staff records is shown in a success notification.
+[ ] Every staff member appears in the table.
+[ ] Teacher records have teacher profiles.
+[ ] Qualification and professional details appear correctly.
+[ ] Blank lines at the bottom of the CSV do not create empty records.
+
+[ ] 3.9 Create another CSV with two rows: one valid row and one row missing a
+        required value such as first_name.
+[ ] 3.10 Upload the invalid file.
+
+Expected result:
+
+[ ] The import is rejected with a message identifying the invalid row/field.
+[ ] The valid row from that same file is not partially imported.
+
+
+TEST 4 - STUDENT CSV IMPORT
+---------------------------
+
+Goal: Confirm that the school-specific student template imports correctly.
+
+[ ] 4.1 Open Student setup.
+[ ] 4.2 Download a fresh student import template.
+[ ] 4.3 Open it in Excel.
+[ ] 4.4 Add at least three new students with unique admission numbers.
+[ ] 4.5 Use valid class arm, academic session and term IDs from the template.
+[ ] 4.6 Make two of the students siblings by using the same parent email.
+[ ] 4.7 Save/export the file as CSV without renaming the headings.
+[ ] 4.8 Upload and import the CSV.
+
+Expected result:
+
+[ ] All students appear in Student setup.
+[ ] Each student is placed in the selected class arm, session and term.
+[ ] The sibling records share one parent account.
+[ ] Blank rows are ignored.
+
+[ ] 4.9 Upload a file containing one valid student and one invalid student.
+
+Expected result:
+
+[ ] The entire file is rejected.
+[ ] The valid student is not partially imported.
+[ ] The error identifies the affected row and field.
+
+
+TEST 5 - SCORE TEMPLATE IMPORT
+------------------------------
+
+Goal: Confirm both single-subject and filtered/bulk score imports.
+
+[ ] 5.1 Open Score entry.
+[ ] 5.2 Select a class arm and one subject with an assessment flow.
+[ ] 5.3 Download the subject score template.
+[ ] 5.4 Open it in Excel and enter valid scores for the students.
+[ ] 5.5 Do not rename, remove or reorder assessment headings.
+[ ] 5.6 Save/export it as CSV and upload it for the same subject.
+
+Expected result:
+
+[ ] The import succeeds.
+[ ] Scores appear against the correct students and assessment items.
+[ ] Totals and positions update correctly.
+
+[ ] 5.7 Select ALL subjects or a filtered group supported by the score page.
+[ ] 5.8 Download the filtered CSV template.
+[ ] 5.9 Enter scores for multiple student/subject rows.
+[ ] 5.10 Upload the file using the bulk import option.
+
+Expected result:
+
+[ ] All selected subject sheets are updated.
+[ ] Each score is attached to the correct student and subject.
+[ ] Existing scores are updated instead of duplicated.
+
+[ ] 5.11 Try a score above the configured maximum.
+
+Expected result:
+
+[ ] The import is rejected with a useful validation message.
+[ ] Invalid scores are not saved.
+
+[ ] 5.12 Lock score entry for the session and attempt import as a teacher.
+
+Expected result:
+
+[ ] The teacher cannot import or change scores while the session is locked.
+
+Important: Upload CSV files. If Excel changes the file to .xlsx, export or save
+it again as CSV before uploading.
+
+
+TEST 6 - EDIT STAFF/TEACHER INFORMATION
+---------------------------------------
+
+[ ] 6.1 Open Staff setup.
+[ ] 6.2 Click the edit icon for an existing teacher.
+[ ] 6.3 Change the surname, phone, qualification, department and job title.
+[ ] 6.4 Save the changes.
+
+Expected result:
+
+[ ] The modal closes with a success notification.
+[ ] The table shows the updated information.
+[ ] The linked portal user's name is updated.
+[ ] The teacher profile remains available for assignments.
+
+[ ] 6.5 Change a staff member's role and save.
+
+Expected result:
+
+[ ] The staff table and linked school role show the new role.
+[ ] The user receives the permissions configured for the new role.
+
+
+TEST 7 - EDIT STUDENT INFORMATION
+---------------------------------
+
+[ ] 7.1 Open Student setup.
+[ ] 7.2 Click the edit icon for an existing student.
+[ ] 7.3 Change the student's surname or date of birth.
+[ ] 7.4 Change the current class arm or term.
+[ ] 7.5 Update the guardian phone number or relationship.
+[ ] 7.6 Save the changes.
+
+Expected result:
+
+[ ] The student details update successfully.
+[ ] The current placement reflects the selected class arm/session/term.
+[ ] Guardian information remains linked to the student.
+[ ] Another sibling linked to the same parent is not duplicated.
+
+[ ] 7.7 Change a temporary student's status to Withdrawn.
+
+Expected result:
+
+[ ] The table displays the updated status.
+
+
+TEST 8 - STUDENT SESSION ROLLOVER
+---------------------------------
+
+Goal: Confirm that promotion is separate from session duplication.
+
+[ ] 8.1 Open Students, then Session rollover.
+[ ] 8.2 Select the old/source session.
+[ ] 8.3 Click Load students.
+[ ] 8.4 Select the new/destination session and destination term.
+[ ] 8.5 For one current class arm, use "Map all to an arm" to select the next
+        class arm.
+[ ] 8.6 Confirm that every student in that group receives the mapping.
+[ ] 8.7 Override at least four individual students as follows:
+        - Student A: Promote to the next class.
+        - Student B: Repeat in the current class.
+        - Student C: Graduate.
+        - Student D: Withdrawn/left.
+[ ] 8.8 Apply the rollover decisions.
+
+Expected result:
+
+[ ] Student A is actively enrolled in the destination session and next class.
+[ ] Student B is actively enrolled in the destination session and repeated class.
+[ ] Student C is marked Graduated and has no new active enrolment.
+[ ] Student D is marked Withdrawn and has no new active enrolment.
+[ ] The old session enrolments remain available as historical records.
+[ ] Applying the same rollover again updates the destination placement and does
+        not create duplicate enrolments.
+
+
+FINAL QUICK REGRESSION
+----------------------
+
+[ ] F1. Academic setup still opens correctly.
+[ ] F2. Staff setup still opens correctly.
+[ ] F3. Student setup still opens correctly.
+[ ] F4. Teacher assignments still display the edited teachers.
+[ ] F5. Assessment setup still displays the copied/configured assessment flows.
+[ ] F6. Score entry still shows eligible students in the correct class arms.
+[ ] F7. Result readiness still loads.
+[ ] F8. A report card can still be generated and previewed.
+[ ] F9. The class broadsheet still loads and downloads.
+[ ] F10. School colours, font and logo still display correctly on changed pages.
+
+
+TEST COMPLETION SUMMARY
+-----------------------
+
+Tester: ______________________________________
+School: ______________________________________
+Test date: ___________________________________
+Application URL: _____________________________
+
+Session duplication:       PASS / FAIL
+Shared parent account:     PASS / FAIL
+Staff CSV import:          PASS / FAIL
+Student CSV import:        PASS / FAIL
+Score CSV import:          PASS / FAIL
+Staff editing:             PASS / FAIL
+Student editing:           PASS / FAIL
+Student rollover:          PASS / FAIL
+Final regression:          PASS / FAIL
+
+Ready for proprietor test or pilot: YES / NO
+
+Outstanding issues:
+______________________________________________________________________________
+______________________________________________________________________________
+______________________________________________________________________________

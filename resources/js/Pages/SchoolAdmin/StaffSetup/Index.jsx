@@ -6,7 +6,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Download, PenLine, Plus, Send, SlidersHorizontal, X } from 'lucide-react';
+import { Download, Pencil, PenLine, Plus, Send, SlidersHorizontal, X } from 'lucide-react';
 import { useState } from 'react';
 
 function SelectInput({ id, value, onChange, children }) {
@@ -120,6 +120,7 @@ export default function Index({ roles, permissionModules, accessLevels, staff })
     const { auth } = usePage().props;
     const canWrite = auth.permissions?.staff_setup === 'readwrite';
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingMember, setEditingMember] = useState(null);
     const [overrideMember, setOverrideMember] = useState(null);
     const [signatureMember, setSignatureMember] = useState(null);
     const form = useForm({
@@ -147,13 +148,47 @@ export default function Index({ roles, permissionModules, accessLevels, staff })
 
     const submit = (event) => {
         event.preventDefault();
-        form.post(route('school.staff.store'), {
+        const options = {
             preserveScroll: true,
             onSuccess: () => {
                 form.reset();
                 setShowCreateModal(false);
+                setEditingMember(null);
             },
+        };
+
+        if (editingMember) {
+            form.put(route('school.staff.update', editingMember.id), options);
+        } else {
+            form.post(route('school.staff.store'), options);
+        }
+    };
+
+    const openCreate = () => {
+        setEditingMember(null);
+        form.reset();
+        form.clearErrors();
+        setShowCreateModal(true);
+    };
+
+    const openEdit = (member) => {
+        setEditingMember(member);
+        form.setData({
+            staff_no: member.staff_no ?? '', first_name: member.first_name ?? '', last_name: member.last_name ?? '', middle_name: member.middle_name ?? '',
+            email: member.email ?? '', phone: member.phone ?? '', gender: member.gender ?? '', role: member.role ?? '',
+            qualification: member.qualification ?? '', specialization: member.specialization ?? '', department: member.department ?? '', job_title: member.job_title ?? '',
+            address: member.address ?? '', emergency_contact_name: member.emergency_contact_name ?? '', emergency_contact_phone: member.emergency_contact_phone ?? '',
+            employment_date: member.employment_date?.slice(0, 10) ?? '', employment_type: member.employment_type ?? '', send_invite: false,
         });
+        form.clearErrors();
+        setShowCreateModal(true);
+    };
+
+    const closeStaffModal = () => {
+        setShowCreateModal(false);
+        setEditingMember(null);
+        form.reset();
+        form.clearErrors();
     };
 
     const importStaff = (event) => {
@@ -220,7 +255,7 @@ export default function Index({ roles, permissionModules, accessLevels, staff })
                 <div>
                     <button
                         type="button"
-                        onClick={() => setShowCreateModal(true)}
+                        onClick={openCreate}
                         className="inline-flex items-center gap-2 rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-95"
                     >
                         <Plus className="h-4 w-4" aria-hidden="true" strokeWidth={2.25} />
@@ -233,10 +268,10 @@ export default function Index({ roles, permissionModules, accessLevels, staff })
                     <form onSubmit={submit}>
                         <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4">
                             <div>
-                                <h2 className="text-base font-bold text-slate-950">Add staff</h2>
-                                <p className="mt-1 text-sm text-slate-500">Create a staff profile and invite portal access.</p>
+                                <h2 className="text-base font-bold text-slate-950">{editingMember ? 'Edit staff' : 'Add staff'}</h2>
+                                <p className="mt-1 text-sm text-slate-500">{editingMember ? 'Update staff, role, professional, and portal account details.' : 'Create a staff profile and invite portal access.'}</p>
                             </div>
-                            <button type="button" onClick={() => setShowCreateModal(false)} className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white text-slate-500 hover:text-slate-900" aria-label="Close">
+                            <button type="button" onClick={closeStaffModal} className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white text-slate-500 hover:text-slate-900" aria-label="Close">
                                 <X className="h-4 w-4" aria-hidden="true" strokeWidth={2.25} />
                             </button>
                         </div>
@@ -332,10 +367,10 @@ export default function Index({ roles, permissionModules, accessLevels, staff })
                                         <option value="contract">Contract</option>
                                     </SelectInput>
                                 </div>
-                                <label className="flex items-end gap-3 rounded-lg border border-[var(--brand-primary-border)] bg-[var(--brand-primary-soft)] p-3 text-sm font-semibold text-slate-700">
+                                {!editingMember && <label className="flex items-end gap-3 rounded-lg border border-[var(--brand-primary-border)] bg-[var(--brand-primary-soft)] p-3 text-sm font-semibold text-slate-700">
                                     <input type="checkbox" checked={form.data.send_invite} onChange={(event) => form.setData('send_invite', event.target.checked)} className="rounded border-slate-300 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]" />
                                     Send portal invite
-                                </label>
+                                </label>}
                             </div>
 
                             <div>
@@ -356,7 +391,7 @@ export default function Index({ roles, permissionModules, accessLevels, staff })
                         </div>
 
                         <div className="flex justify-end border-t border-slate-200 px-5 py-4">
-                            <PrimaryButton disabled={form.processing}>Save staff</PrimaryButton>
+                            <PrimaryButton disabled={form.processing}>{editingMember ? 'Update staff' : 'Save staff'}</PrimaryButton>
                         </div>
                     </form>
                 </Modal>
@@ -399,6 +434,9 @@ export default function Index({ roles, permissionModules, accessLevels, staff })
                             className: 'text-right',
                             render: (member) => (
                                 <div className="inline-flex items-center gap-2">
+                                    <button type="button" onClick={() => openEdit(member)} className="grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50" aria-label={`Edit ${member.first_name} ${member.last_name}`} title="Edit staff">
+                                        <Pencil className="h-4 w-4" aria-hidden="true" strokeWidth={2.25} />
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={() => {
